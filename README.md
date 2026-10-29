@@ -1,141 +1,305 @@
 # Mini AI Business Intelligence Assistant
 
-A small Python application that answers natural-language questions about sales transactions using SQLite queries. It is built for the RSG AI-Assisted Development Challenge.
+A Python-based AI-assisted Business Intelligence application that answers natural-language questions about sales transactions using SQLite analytical queries.
 
-## Features
+**Developed for:** RSG AI-Assisted Development Challenge
 
-- Imports the supplied CSV into SQLite.
-- Cleans/flags invalid rows and excludes them from revenue calculations.
-- Supports total revenue, top product, monthly trend, top region, and two-month comparison.
-- Uses an LLM to classify the question when `OPENAI_API_KEY` is configured.
-- Uses a deterministic rule-based fallback when no API key is configured.
-- Executes only predefined, read-only analytical SQL. The LLM never writes or executes SQL.
-- FastAPI backend, Streamlit UI, and Pytest tests.
+**GitHub Repository:** https://github.com/dhakshinya22/ai-business-intelligence-assistant
 
-## Revenue definition and data-quality policy
+## 1. Project Overview
 
-`revenue = quantity * unit_price - discount_amount`
+The Mini AI Business Intelligence Assistant helps users understand sales data by asking questions in plain English instead of manually writing SQL queries.
 
-Only rows with status `Completed`, a valid date, positive quantity, non-negative discount, and non-negative non-null unit price are included. Returned transactions, zero/non-positive quantities, and missing/invalid prices are retained in the database with `is_valid = 0` and an `exclusion_reason`, but excluded from analytics.
+The application interprets the user's question, identifies the required analysis, retrieves the relevant information from an SQLite database, and presents the answer with supporting figures and visualizations.
 
-For the supplied CSV: 51 rows loaded, 48 valid rows, 3 excluded rows. Expected total revenue is ₹14,39,200.
+## 2. Features
 
-## Setup
+- Imports sales transaction data from CSV into SQLite.
+- Validates records and identifies invalid transactions.
+- Supports five business questions:
+  - What is the total revenue?
+  - Which product generated the highest revenue?
+  - What is the monthly revenue trend?
+  - Which region generated the highest sales?
+  - What is the month-to-month revenue change?
+- Uses optional LLM-based question classification when an OpenAI API key is configured.
+- Uses a rule-based fallback when an API key is unavailable.
+- Executes predefined, read-only SQL queries for numerical calculations.
+- Displays structured answers, supporting figures, and charts.
+- Provides a FastAPI backend and Streamlit frontend.
+- Includes automated tests using Pytest.
 
-Python 3.10+ is recommended.
+## 3. Technologies Used
 
-```bash
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
+| Technology | Purpose |
+|---|---|
+| Python | Main programming language |
+| Pandas | CSV loading and data validation |
+| SQLite | Database storage and analytical queries |
+| FastAPI | Backend API development |
+| Streamlit | Interactive user interface |
+| SQL | Revenue calculations and data analysis |
+| Pytest | Automated testing |
+| OpenAI API | Optional natural-language intent classification |
+| Git and GitHub | Version control and project hosting |
 
-pip install -r requirements.txt
-copy .env.example .env
+## 4. Revenue Calculation and Data Validation
+
+The application calculates revenue using:
+
+`Revenue = (Quantity × Unit Price) - Discount Amount`
+
+Only valid completed transactions are included in revenue calculations.
+
+A transaction is excluded if it has:
+- A status other than Completed.
+- An invalid date.
+- Zero or negative quantity.
+- Missing or invalid unit price.
+- Negative discount amount.
+
+Invalid records are retained in the database with an `is_valid` flag and an `exclusion_reason`.
+
+**Supplied dataset summary:**
+
+| Description | Count |
+|---|---:|
+| Total records | 51 |
+| Valid transactions | 48 |
+| Excluded transactions | 3 |
+
+**Expected total revenue: ₹14,39,200**
+
+## 5. System Architecture
+
+```text
+             Sales CSV File
+                   |
+                   v
+          Pandas Data Validation
+                   |
+                   v
+             SQLite Database
+                   |
+                   v
+User Question --> Streamlit UI
+                   |
+                   v
+              FastAPI
+                   |
+                   v
+          Question Interpreter
+            /           \
+       LLM Mode      Rule-Based
+            \           /
+                   |
+                   v
+         Predefined SQL Queries
+                   |
+                   v
+          Revenue Calculations
+                   |
+                   v
+           Structured JSON
+                   |
+                   v
+       Streamlit Results and Charts
 ```
 
-The LLM is optional. To enable LLM-based interpretation, add your API key to `.env`:
+**Important design decision:** The LLM is used only to identify the user's question intent. Numerical calculations are performed using predefined SQL queries, not generated by the LLM.
+
+## 6. Project Structure
+
+```text
+ai_business_intelligence_assistant/
+│
+├── main.py
+├── analytics.py
+├── question_parser.py
+├── data_loader.py
+├── db.py
+├── streamlit_app.py
+├── sales_data.csv
+├── requirements.txt
+├── pytest.ini
+├── README.md
+├── AI_DEVELOPMENT_NOTES.md
+├── .env.example
+├── .gitignore
+│
+└── tests/
+    ├── conftest.py
+    └── test_analytics.py
+```
+
+## 7. Installation and Setup
+
+**Requirements:** Python 3.10 or above.
+
+Clone the repository:
+
+```bash
+git clone https://github.com/dhakshinya22/ai-business-intelligence-assistant.git
+
+cd ai-business-intelligence-assistant
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Activate it on Windows PowerShell:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Create an environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### Optional LLM Configuration
+
+To enable LLM-based question classification, add your API key to `.env`:
 
 ```env
-OPENAI_API_KEY=your_key_here
+OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
-Without a key, the application uses its local rule-based question interpreter. Calculations are always performed by SQL, not by the LLM.
+Without an API key, the application uses its rule-based question interpreter.
 
-## Run
+All revenue calculations are performed using SQL.
 
-Open two terminals in the project folder.
+## 8. Running the Application
 
-Terminal 1 — backend:
+The application requires two terminals.
+
+**Terminal 1 – Start the FastAPI backend:**
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Backend docs: http://127.0.0.1:8000/docs
+API documentation:
 
-Terminal 2 — frontend:
+http://127.0.0.1:8000/docs
+
+**Terminal 2 – Start the Streamlit frontend:**
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-Open the Streamlit URL shown in the terminal (normally http://localhost:8501).
+Open the local URL displayed in the terminal, normally:
 
-On first backend startup, the CSV is imported into `sales.db`. To reload the CSV after replacing it, call `POST /reload-data` from `/docs`.
+http://localhost:8501
 
-## API
+On the first backend startup, the application imports the supplied CSV into `sales.db`.
 
-`POST /ask`
+## 9. API Endpoints
 
-Request:
+### GET /health
+
+Checks whether the backend is running.
+
+### POST /ask
+
+Accepts a natural-language sales question.
+
+Example request:
 
 ```json
-{"question": "Which product generated the highest revenue?"}
+{
+  "question": "Which product generated the highest revenue?"
+}
 ```
 
-The response contains `success`, `title`, `answer`, `supporting_data`, `calculation`, and `question_interpreter`.
+The API returns:
+- Success status
+- Answer title
+- Natural-language answer
+- Supporting figures
+- Calculation details
+- Question interpretation method
 
-`GET /health` checks backend availability.
+### POST /reload-data
 
-## Architecture
+Reloads the supplied CSV into the database.
 
-```text
-CSV file
-   |
-   v
-Pandas validation and cleaning
-   |
-   v
-SQLite sales table (validity flag + exclusion reason)
-   |
-User question --> Streamlit UI --> FastAPI /ask
-                                  |
-                                  v
-                       Question interpreter
-                       (LLM JSON intent or rules)
-                                  |
-                                  v
-                       Allow-listed analytics
-                       (parameterized SQL)
-                                  |
-                                  v
-                       Structured JSON answer
-                                  |
-                                  v
-                       Streamlit answer + figures
-```
+## 10. Testing
 
-## Safety and reliability
-
-- The LLM returns an intent, not SQL.
-- The intent must match a fixed allow-list.
-- SQL statements are predefined and read-only.
-- Month filters use SQL parameters.
-- Invalid/unsupported questions return a clear error.
-- Database loading records why a row was excluded.
-- LLM/API failures fall back to the local parser.
-
-## Tests
+Run the automated tests:
 
 ```bash
-pytest -q
+python -m pytest -v
 ```
 
-Tests cover total revenue, top product, monthly trend, top region, month comparison, unsupported questions, and invalid-row exclusion.
+**Verified test results: 7 passed**
 
-## Known limitations
+The tests cover:
 
-- The rule-based fallback supports common English phrasings, not every possible wording.
-- The LLM mode requires an API key and internet access.
-- The sample dataset contains dates from January to June 2026; questions for periods without data return zero or an empty trend.
-- The current application uses one SQLite database and is intended as a small assessment project, not a production multi-user service.
-- The comparison parser orders months chronologically; it is intended for the dataset's 2026 period.
+| Test | Result |
+|---|---|
+| Total revenue calculation | Passed |
+| Highest revenue product | Passed |
+| Monthly revenue trend | Passed |
+| Highest sales region | Passed |
+| Month-to-month comparison | Passed |
+| Unsupported question handling | Passed |
+| Invalid transaction exclusion | Passed |
 
-## AI usage and development notes
+All seven automated tests passed in 0.37 seconds during local testing.
 
-This project uses ChatGPT as an AI coding and design assistant to help plan the architecture, draft implementation code, identify edge cases, and prepare tests/documentation. The optional LLM integration is limited to classifying the user's question into a supported intent. SQL performs all numerical calculations.
+## 11. Safety and Reliability
 
-Before submission, the developer should run the tests, manually try all example questions, inspect the generated SQL logic, and be prepared to explain and modify each module. Add a truthful note here about any debugging issues encountered during your own run and how you resolved them.
+- The LLM classifies questions but does not generate SQL.
+- Only supported question intents are accepted.
+- Analytical queries are predefined and read-only.
+- SQL parameters are used for month filters.
+- Invalid transactions are excluded from calculations.
+- Unsupported questions return a clear response.
+- LLM/API failures can use the local rule-based fallback.
+
+## 12. Known Limitations
+
+- Rule-based interpretation supports common English question patterns.
+- LLM-based interpretation requires an API key and internet access.
+- The supplied dataset covers January to June 2026.
+- The application uses SQLite and is designed for a small assessment project rather than a production multi-user environment.
+- Month comparison is primarily designed for the supplied 2026 dataset.
+
+## 13. AI Usage and Development Experience
+
+ChatGPT was used as an AI coding and development assistant to help with architecture planning, implementation guidance, debugging, test preparation, and documentation.
+
+During development, the following issues were encountered and resolved:
+
+1. **Frontend API timeout:** The Streamlit request initially timed out. The request timeout was increased from 30 to 60 seconds, after which the application successfully displayed the API results.
+2. **Pytest command issue:** Pytest was initially not recognized in PowerShell. It was installed in the virtual environment and executed successfully using `python -m pytest -v`.
+3. **Backend verification:** The FastAPI health endpoint and question-answering endpoint were tested successfully through the API documentation.
+
+The application was manually tested with all five required business questions, and all seven automated tests passed.
+
+## 14. Future Enhancements
+
+- Support more natural-language question patterns.
+- Add more business analytics and filtering options.
+- Introduce additional datasets and database support.
+- Improve visualizations and dashboard customization.
+- Explore agent-based workflows for more complex business questions.
+
+---
+
+**Project:** Mini AI Business Intelligence Assistant  
+**Repository:** https://github.com/dhakshinya22/ai-business-intelligence-assistant
