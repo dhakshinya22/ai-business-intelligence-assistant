@@ -2,7 +2,7 @@
 
 A Python-based AI-assisted Business Intelligence application that answers natural-language questions about sales transactions using SQLite analytical queries.
 
-**Developed for:** RSG AI-Assisted Development Challenge
+**Developed for:** AI-Assisted Development Challenge
 
 **GitHub Repository:** https://github.com/dhakshinya22/ai-business-intelligence-assistant
 
